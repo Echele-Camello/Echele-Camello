@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Contract, WorkerProfile, Dispute } from '../../types';
 import { 
   Users, ShieldCheck, AlertTriangle, DollarSign, Download, 
-  CheckCircle2, XCircle, ArrowRight, Eye, RefreshCw, Sliders 
+  CheckCircle2, XCircle, ArrowRight, Eye, RefreshCw, Sliders, Database 
 } from 'lucide-react';
+import { LiquibaseHistoryPanel } from './LiquibaseHistoryPanel';
 
 interface AdminDashboardProps {
   contracts: Contract[];
@@ -22,7 +23,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onRejectWorkerVerification,
   onResolveDispute
 }) => {
-  const [activeTab, setActiveTab] = useState<'metricas' | 'verificaciones' | 'disputas' | 'configuracion'>('metricas');
+  const [activeTab, setActiveTab] = useState<'metricas' | 'verificaciones' | 'disputas' | 'configuracion' | 'liquibase'>('metricas');
   const [commissionRate, setCommissionRate] = useState(10);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(disputes[0] || null);
   const [resolutionMotive, setResolutionMotive] = useState('Resolución motivada basada en evidencia de inspección.');
@@ -347,6 +348,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Tab 5: Liquibase & Database History */}
+            {activeTab === 'liquibase' && (
+              <LiquibaseHistoryPanel />
             )}
 
             {/* Tab 4: Configuration */}

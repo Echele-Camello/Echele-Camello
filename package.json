@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "db:status": "powershell -ExecutionPolicy Bypass -File db/run-liquibase.ps1 status",
+    "db:update": "powershell -ExecutionPolicy Bypass -File db/run-liquibase.ps1 update",
+    "db:history": "powershell -ExecutionPolicy Bypass -File db/run-liquibase.ps1 history",
+    "db:rollback": "powershell -ExecutionPolicy Bypass -File db/run-liquibase.ps1 rollback-count 1"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -27,7 +31,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",

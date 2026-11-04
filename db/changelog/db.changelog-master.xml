@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Changelog Maestro para Échele Camello (EcheleCamelloPrueba) -->
+    <!-- Define la secuencia ordenada de cambios de esquema y semillas -->
+
+    <!-- 001: Esquema Inicial de Base de Datos -->
+    <include file="changesets/001_initial_schema.sql" relativeToChangelogFile="true"/>
+
+    <!-- 002: Semillas de Datos Iniciales (Usuarios, Categorías, Trabajadores, Contratos) -->
+    <include file="changesets/002_seed_data.sql" relativeToChangelogFile="true"/>
+
+    <!-- 003: Módulos de Custodia de Fondos (Escrow), Disputas y Auditoría -->
+    <include file="changesets/003_escrow_and_security.sql" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>
+

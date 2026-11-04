@@ -245,3 +245,29 @@ export interface WorkerAnnouncement {
   comentarios: AnnouncementComment[];
 }
 
+
+export interface LiquibaseChangeset {
+  id: string;
+  author: string;
+  filename: string;
+  dateExecuted: string;
+  orderExecuted: number;
+  execType: 'EXECUTED' | 'FAILED' | 'SKIPPED' | 'RERAN';
+  md5sum: string;
+  description: string;
+  comments: string;
+  category: 'schema' | 'seed' | 'security';
+  tablesAffected: string[];
+  rollbackSql: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  accion: string;
+  usuario: string;
+  timestamp: string;
+  esquema: string;
+  detalles: string;
+  severidad: 'INFO' | 'WARN' | 'CRITICAL';
+  created_at?: string;
+}
