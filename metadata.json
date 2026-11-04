@@ -1,0 +1,6 @@
+{
+  "name": "Échele Camello - Contratación Segura para Trabajo Informal",
+  "description": "Plataforma web con custodia de pagos (escrow), ofertas formales, verificación de identidad y reputación para oficios y servicios no regulados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
