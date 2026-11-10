@@ -3,6 +3,7 @@ import {
   ShieldCheck, Lock, CheckCircle2, ArrowRight, Building2, 
   Scale, Users, HeartHandshake, FileText, BadgeCheck, DollarSign, Award
 } from 'lucide-react';
+import { MinimalistCamel3D } from './MinimalistCamel3D';
 
 interface CompanyLandingPageProps {
   onOpenLogin: () => void;
@@ -20,40 +21,48 @@ export const CompanyLandingPage: React.FC<CompanyLandingPageProps> = ({
   return (
     <div className="w-full bg-white">
       
-      {/* Hero Section: Corporate identity & purpose */}
-      <section className="max-w-[1200px] mx-auto px-4 md:px-8 pt-12 md:pt-20 pb-16">
-        <div className="max-w-3xl space-y-6">
+      {/* Hero Section: Corporate identity & purpose + 3D Camel */}
+      <section className="max-w-[1250px] mx-auto px-4 md:px-8 pt-10 md:pt-16 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#60646c]">
-            <span className="text-[#ff5900] font-bold">Échele Camello S.A.S.</span>
-            <span aria-hidden="true">·</span>
-            <span>Institucional & Corporativo</span>
-            <span aria-hidden="true">·</span>
-            <span>Colombia</span>
+          {/* Left Column: Corporate Heading, Pitch & CTAs */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#60646c]">
+              <span className="text-[#ff5900] font-bold">Échele Camello S.A.S.</span>
+              <span aria-hidden="true">·</span>
+              <span>Institucional & Corporativo</span>
+              <span aria-hidden="true">·</span>
+              <span>Colombia</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-black tracking-[-0.03em] leading-[1.05] text-balance">
+              La plataforma que brinda seguridad, confianza y custodia de pagos al trabajo informal.
+            </h1>
+
+            <p className="text-base md:text-lg text-[#60646c] font-normal leading-relaxed">
+              Échele Camello es una empresa de tecnología social e intermediación financiera diseñada para resolver el problema histórico de la desconfianza y la falta de garantías en los oficios no regulados en Colombia.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                onClick={onOpenRegister}
+                className="px-6 py-3 bg-[#ff5900] hover:bg-[#e04f00] text-white text-sm font-semibold rounded-[12px] transition-colors cursor-pointer shadow-xs flex items-center gap-2"
+              >
+                <span>Registrarme como Cliente</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onOpenLogin}
+                className="px-6 py-3 bg-white hover:bg-[#f3f3f7] text-black border border-[#b9bbc6] text-sm font-semibold rounded-[12px] transition-colors cursor-pointer"
+              >
+                Iniciar Sesión
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-semibold text-black tracking-[-0.03em] leading-[1.05] text-balance">
-            La plataforma que brinda seguridad, confianza y custodia de pagos al trabajo informal.
-          </h1>
-
-          <p className="text-lg md:text-xl text-[#60646c] font-normal leading-relaxed">
-            Échele Camello es una empresa de tecnología social e intermediación financiera diseñada para resolver el problema histórico de la desconfianza y la falta de garantías en los oficios no regulados en Colombia.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              onClick={onOpenRegister}
-              className="px-6 py-3 bg-[#ff5900] hover:bg-[#e04f00] text-white text-sm font-semibold rounded-[12px] transition-colors cursor-pointer shadow-xs flex items-center gap-2"
-            >
-              <span>Registrarme como Cliente</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onOpenLogin}
-              className="px-6 py-3 bg-white hover:bg-[#f3f3f7] text-black border border-[#b9bbc6] text-sm font-semibold rounded-[12px] transition-colors cursor-pointer"
-            >
-              Iniciar Sesión
-            </button>
+          {/* Right Column: Three.js Minimalist Animated Camel */}
+          <div className="lg:col-span-5 flex items-center justify-center">
+            <MinimalistCamel3D />
           </div>
 
         </div>
