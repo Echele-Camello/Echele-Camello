@@ -6,6 +6,7 @@ import {
   ArrowRight, Briefcase, Zap, PhoneCall, Award
 } from 'lucide-react';
 import { COLOMBIA_DEPARTMENTS } from '../../data/colombiaData';
+import { platformGateway } from '../../architecture/gateway/ApiGateway';
 
 interface WorkerCatalogViewProps {
   workers: WorkerProfile[];
@@ -32,7 +33,7 @@ export const WorkerCatalogView: React.FC<WorkerCatalogViewProps> = ({
   const [minPriceCOP, setMinPriceCOP] = useState<number>(20000);
   const [maxPriceCOP, setMaxPriceCOP] = useState<number>(120000);
   const [minRating, setMinRating] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<'relevancia' | 'calificacion' | 'precio_menor' | 'precio_mayor' | 'experiencia'>('relevancia');
+  const [sortBy, setSortBy] = useState<'relevancia' | 'cercania' | 'calificacion' | 'precio_menor' | 'precio_mayor' | 'experiencia'>('relevancia');
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
   // Colombian Cities list for dropdown
@@ -61,76 +62,34 @@ export const WorkerCatalogView: React.FC<WorkerCatalogViewProps> = ({
     return list;
   }, []);
 
-  // Filter logic
-  const filteredWorkers = useMemo(() => {
-    return workers.filter((worker) => {
-      // 1. Text Search (name, category, specialties, description)
-      if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase();
-        const matchName = worker.nombre.toLowerCase().includes(query);
-        const matchCat = worker.categoriaNombre.toLowerCase().includes(query);
-        const matchSpecs = worker.especialidades.some(s => s.toLowerCase().includes(query));
-        const matchDesc = worker.descripcion.toLowerCase().includes(query);
-        const matchCity = worker.ciudad.toLowerCase().includes(query);
-        if (!matchName && !matchCat && !matchSpecs && !matchDesc && !matchCity) return false;
-      }
-
-      // 2. Category / Role filter
-      if (selectedCategory !== 'all' && worker.categoriaId !== selectedCategory) {
-        return false;
-      }
-
-      // 3. City Dropdown
-      if (selectedCity !== 'all') {
-        const normCity = worker.ciudad.toLowerCase();
-        const normSelected = selectedCity.toLowerCase();
-        if (!normCity.includes(normSelected) && !normSelected.includes(normCity)) {
-          return false;
-        }
-      }
-
-      // 4. Availability
-      if (onlyAvailable && !worker.disponible) {
-        return false;
-      }
-
-      // 5. Verified
-      if (onlyVerified && !worker.verificado) {
-        return false;
-      }
-
-      // 6. Schedule Filter
-      if (selectedSchedule !== 'all') {
-        const sched = worker.horarioAtencion.toLowerCase();
-        if (selectedSchedule === '24h' && !sched.includes('24')) return false;
-        if (selectedSchedule === 'manana' && !sched.includes('am') && !sched.includes('7') && !sched.includes('8') && !sched.includes('6')) return false;
-        if (selectedSchedule === 'tarde' && !sched.includes('pm') && !sched.includes('sábado') && !sched.includes('viernes')) return false;
-        if (selectedSchedule === 'jornada_completa' && !sched.includes('lunes a') && !sched.includes('todos los días')) return false;
-      }
-
-      // 7. Price range (COP per hour)
-      if (worker.tarifaPorHora < minPriceCOP || worker.tarifaPorHora > maxPriceCOP) {
-        return false;
-      }
-
-      // 8. Rating
-      if (minRating > 0 && worker.calificacionPromedio < minRating) {
-        return false;
-      }
-
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'calificacion') return b.calificacionPromedio - a.calificacionPromedio;
-      if (sortBy === 'precio_menor') return a.tarifaPorHora - b.tarifaPorHora;
-      if (sortBy === 'precio_mayor') return b.tarifaPorHora - a.tarifaPorHora;
-      if (sortBy === 'experiencia') return b.serviciosCompletados - a.serviciosCompletados;
-      return 0;
+  // Filter & Sort logic delegated to ms-busqueda (Patrón Strategy + Adapter Geolocalización + DTO)
+  const searchResults = useMemo(() => {
+    return platformGateway.msBusqueda.searchWorkers(workers, {
+      termino: searchTerm,
+      categoriaId: selectedCategory,
+      ciudad: selectedCity,
+      soloDisponibles: onlyAvailable,
+      soloVerificados: onlyVerified,
+      horario: selectedSchedule,
+      precioMinCOP: minPriceCOP,
+      precioMaxCOP: maxPriceCOP,
+      calificacionMinima: minRating,
+      estrategiaOrdenamiento: sortBy
     });
   }, [
-    workers, searchTerm, selectedCategory, selectedCity, 
-    onlyAvailable, onlyVerified, selectedSchedule, 
+    workers, searchTerm, selectedCategory, selectedCity,
+    onlyAvailable, onlyVerified, selectedSchedule,
     minPriceCOP, maxPriceCOP, minRating, sortBy
   ]);
+
+  const filteredWorkers = useMemo(() => searchResults.map((r) => r.worker), [searchResults]);
+  const distanceByWorkerId = useMemo(() => {
+    const map: Record<string, number> = {};
+    searchResults.forEach((r) => {
+      map[r.worker.id] = r.distanciaKm;
+    });
+    return map;
+  }, [searchResults]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -481,7 +440,8 @@ export const WorkerCatalogView: React.FC<WorkerCatalogViewProps> = ({
                   onChange={(e: any) => setSortBy(e.target.value)}
                   className="bg-[#f8f9fa] border border-[#b9bbc6] rounded-[10px] px-2.5 py-1.5 text-xs font-semibold text-black focus:outline-none focus:border-[#ff5900] cursor-pointer"
                 >
-                  <option value="relevancia">Relevancia</option>
+                  <option value="relevancia">Relevancia (Strategy Multicriterio)</option>
+                  <option value="cercania">Más Cercanos en Km (Strategy Haversine)</option>
                   <option value="calificacion">Mejor Calificados (5★)</option>
                   <option value="precio_menor">Menor Tarifa COP</option>
                   <option value="precio_mayor">Mayor Tarifa COP</option>
@@ -638,6 +598,11 @@ export const WorkerCatalogView: React.FC<WorkerCatalogViewProps> = ({
                           <MapPin className="w-3.5 h-3.5 text-[#ff5900] shrink-0" />
                           <span className="font-semibold text-black">{worker.ciudad}</span>
                           <span className="text-[#8b8d98] truncate">({worker.barrio})</span>
+                          {typeof distanceByWorkerId[worker.id] === 'number' && (
+                            <span className="ml-auto text-[10px] font-mono bg-[#fff2eb] text-[#ff5900] px-1.5 py-0.5 rounded font-bold shrink-0">
+                              ~{distanceByWorkerId[worker.id]} km
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 text-[#60646c]">
                           <Clock className="w-3.5 h-3.5 text-[#8b8d98] shrink-0" />

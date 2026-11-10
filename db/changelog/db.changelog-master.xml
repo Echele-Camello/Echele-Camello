@@ -17,5 +17,8 @@
     <!-- 003: Módulos de Custodia de Fondos (Escrow), Disputas y Auditoría -->
     <include file="changesets/003_escrow_and_security.sql" relativeToChangelogFile="true"/>
 
+    <!-- 004: Alineación a Arquitectura de 7 Microservicios por Dominio y Patrones de Diseño -->
+    <include file="changesets/004_microservices_domain_alignment.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

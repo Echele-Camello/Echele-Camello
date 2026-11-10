@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserRole, User } from '../../types';
-import { ShieldCheck, LogOut, User as UserIcon } from 'lucide-react';
+import { ShieldCheck, LogOut, Database, Briefcase, UserCheck, Wrench } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -29,11 +29,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#b9bbc6]/40 backdrop-blur-sm">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-6">
-        
+      <div className="max-w-[1300px] mx-auto px-4 md:px-6 min-h-16 py-2 flex flex-wrap items-center justify-between gap-4">
         {/* Zone 1: Brand wordmark */}
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => {
               if (isLoggedIn) {
                 setCurrentTab('catalogo');
@@ -50,71 +49,157 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links: Catálogo and Foro */}
-        <nav className="flex items-center gap-6 text-sm font-medium text-black">
-          {isLoggedIn && (
-            <>
-              <button
-                onClick={() => setCurrentTab('catalogo')}
-                className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap ${
-                  currentTab === 'catalogo' 
-                    ? 'text-black border-b-2 border-[#ff5900] font-semibold' 
-                    : 'text-[#60646c]'
-                }`}
-              >
-                Catálogo
-              </button>
+        {/* Zone 2: Navigation Links */}
+        <nav className="flex items-center gap-5 text-xs md:text-sm font-medium text-black overflow-x-auto">
+          <button
+            onClick={() => setCurrentTab('catalogo')}
+            className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap ${
+              currentTab === 'catalogo'
+                ? 'text-black border-b-2 border-[#ff5900] font-semibold'
+                : 'text-[#60646c]'
+            }`}
+          >
+            Catálogo
+          </button>
 
-              <button
-                onClick={() => setCurrentTab('foro')}
-                className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap ${
-                  currentTab === 'foro' 
-                    ? 'text-black border-b-2 border-[#ff5900] font-semibold' 
-                    : 'text-[#60646c]'
-                }`}
-              >
-                Foro
-              </button>
-            </>
+          <button
+            onClick={() => setCurrentTab('foro')}
+            className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap ${
+              currentTab === 'foro'
+                ? 'text-black border-b-2 border-[#ff5900] font-semibold'
+                : 'text-[#60646c]'
+            }`}
+          >
+            Foro
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('contratos')}
+            className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap flex items-center gap-1 ${
+              currentTab === 'contratos'
+                ? 'text-black border-b-2 border-[#ff5900] font-semibold'
+                : 'text-[#60646c]'
+            }`}
+          >
+            <span>Solicitudes / Contratos</span>
+            {contractsCount > 0 && (
+              <span className="bg-[#f3f3f7] text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold border border-[#b9bbc6]/50">
+                {contractsCount}
+              </span>
+            )}
+          </button>
+
+          {currentRole === 'trabajador' && (
+            <button
+              onClick={() => setCurrentTab('perfil_laboral')}
+              className={`transition-colors cursor-pointer hover:text-black py-1 whitespace-nowrap flex items-center gap-1 ${
+                currentTab === 'perfil_laboral'
+                  ? 'text-black border-b-2 border-[#ff5900] font-semibold'
+                  : 'text-[#60646c]'
+              }`}
+            >
+              <Wrench className="w-3.5 h-3.5 text-[#ff5900]" />
+              <span>Perfil Trabajador</span>
+            </button>
+          )}
+
+          {currentRole === 'admin' && (
+            <button
+              onClick={() => setCurrentTab('admin')}
+              className={`transition-colors cursor-pointer py-1 px-2.5 rounded-[8px] whitespace-nowrap flex items-center gap-1.5 ${
+                currentTab === 'admin'
+                  ? 'bg-[#15191e] text-white font-bold shadow-xs'
+                  : 'bg-[#fff2eb] text-[#ff5900] hover:bg-[#ffe4d4] font-semibold border border-[#ff5900]/30'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-[#ff5900]" />
+              <span>Liquibase & Panel Admin</span>
+            </button>
           )}
         </nav>
 
-        {/* Zone 3: Exact 2 buttons requested: 'Inicio' and 'Registrar' */}
-        <div className="flex items-center gap-3">
+        {/* Zone 3: Role Switcher (Cliente | Trabajador | Admin) + Auth Controls */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Interactive Role Switcher for Testing (ms-usuarios RBAC Switch) */}
+          <div
+            className="inline-flex items-center bg-[#f3f3f7] p-1 rounded-[10px] border border-[#b9bbc6]/60 shadow-2xs"
+            title="Switch rápido de Rol para pruebas (Cliente, Trabajador y Admin con acceso a Liquibase)"
+          >
+            <span className="text-[10px] font-mono font-bold text-[#60646c] px-2 hidden xl:inline">
+              ROL:
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentRole('cliente')}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-[7px] cursor-pointer transition-all flex items-center gap-1 ${
+                currentRole === 'cliente'
+                  ? 'bg-white text-black shadow-xs border border-[#b9bbc6]/40 font-bold'
+                  : 'text-[#60646c] hover:text-black'
+              }`}
+            >
+              <UserCheck className="w-3 h-3 text-[#ff5900]" />
+              <span>Cliente</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentRole('trabajador')}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-[7px] cursor-pointer transition-all flex items-center gap-1 ${
+                currentRole === 'trabajador'
+                  ? 'bg-white text-black shadow-xs border border-[#b9bbc6]/40 font-bold'
+                  : 'text-[#60646c] hover:text-black'
+              }`}
+            >
+              <Briefcase className="w-3 h-3 text-[#ff5900]" />
+              <span>Trabajador</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentRole('admin')}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-[7px] cursor-pointer transition-all flex items-center gap-1 ${
+                currentRole === 'admin'
+                  ? 'bg-[#ff5900] text-white shadow-xs font-bold'
+                  : 'text-[#60646c] hover:text-black'
+              }`}
+            >
+              <ShieldCheck className="w-3 h-3" />
+              <span>Admin (Liquibase)</span>
+            </button>
+          </div>
+
           {!isLoggedIn ? (
             <>
-              {/* Button 1: 'Inicio' -> Takes to Login */}
               <button
                 onClick={onOpenLogin}
-                className="px-4 py-2 text-xs md:text-sm font-semibold text-black hover:bg-[#f3f3f7] border border-[#b9bbc6] rounded-[12px] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                className="px-3.5 py-1.5 text-xs font-semibold text-black hover:bg-[#f3f3f7] border border-[#b9bbc6] rounded-[10px] transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 Inicio
               </button>
 
-              {/* Button 2: 'Registrar' -> Takes to Register */}
               <button
                 onClick={onOpenRegister}
-                className="bg-[#ff5900] hover:bg-[#e04f00] text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-[12px] transition-colors cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
+                className="bg-[#ff5900] hover:bg-[#e04f00] text-white text-xs font-semibold px-3.5 py-1.5 rounded-[10px] transition-colors cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
               >
                 Registrar
               </button>
             </>
           ) : (
-            /* Logged in as Cliente / Trabajador */
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {(() => {
                 const rawNombre = (currentUser.nombre || '').replace(/\s*\([^)]*\)/g, '').trim();
                 const rawApellido = (currentUser.apellido || '').replace(/\s*\([^)]*\)/g, '').trim();
                 const nombreTokens = rawNombre.split(/\s+/).filter(Boolean);
                 const apellidoTokens = rawApellido.split(/\s+/).filter(Boolean);
                 const primerNombre = nombreTokens[0] || 'Usuario';
-                const primerApellido = apellidoTokens[0] || (nombreTokens.length > 1 ? nombreTokens[1] : 'Gómez');
+                const primerApellido =
+                  apellidoTokens[0] || (nombreTokens.length > 1 ? nombreTokens[1] : 'Gómez');
                 const primerNombreYApellido = `${primerNombre} ${primerApellido}`;
 
                 return (
                   <button
                     onClick={() => setCurrentTab('perfil')}
-                    className="flex flex-col items-center justify-center px-2 py-0.5 rounded-[10px] hover:bg-[#f3f3f7] cursor-pointer transition-colors group"
+                    className="flex items-center gap-2 px-2 py-1 rounded-[10px] hover:bg-[#f3f3f7] cursor-pointer transition-colors group"
                     title="Ir a mi Perfil y Dashboard"
                   >
                     <div className="relative">
@@ -126,25 +211,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                       <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-white"></span>
                     </div>
-                    <span className="text-[11px] font-semibold text-black leading-tight mt-0.5 whitespace-nowrap text-center">
-                      {primerNombreYApellido}
-                    </span>
+                    <div className="text-left hidden sm:block">
+                      <span className="text-[11px] font-semibold text-black leading-tight block">
+                        {primerNombreYApellido}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase text-[#ff5900] font-bold block">
+                        {currentRole}
+                      </span>
+                    </div>
                   </button>
                 );
               })()}
 
               <button
                 onClick={onLogout}
-                className="px-3 py-1.5 text-xs font-medium text-[#60646c] hover:text-black border border-[#b9bbc6]/60 rounded-[10px] hover:bg-[#f3f3f7] transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 text-xs font-medium text-[#60646c] hover:text-black border border-[#b9bbc6]/60 rounded-[10px] hover:bg-[#f3f3f7] transition-colors cursor-pointer flex items-center gap-1"
                 title="Cerrar sesión y volver a la Landing Page"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Cerrar sesión</span>
+                <span className="hidden md:inline">Salir</span>
               </button>
             </div>
           )}
         </div>
-
       </div>
     </header>
   );

@@ -9,6 +9,7 @@ import {
   INITIAL_CONTRACTS, INITIAL_MESSAGES, INITIAL_REVIEWS, INITIAL_DISPUTES 
 } from './data/mockData';
 import { INITIAL_ANNOUNCEMENTS } from './data/mockAnnouncements';
+import { platformGateway } from './architecture/gateway/ApiGateway';
 
 // Layout Components
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
@@ -89,7 +90,31 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentRole('cliente');
     setCurrentTab('landing');
+  };
+
+  // Role Switcher Handler for testing Cliente / Trabajador / Admin (ms-usuarios)
+  const handleRoleSwitch = (newRole: UserRole) => {
+    const switched = platformGateway.msUsuarios.switchActiveRole(currentUser, newRole, MOCK_USERS);
+    platformGateway.logRoute(
+      `POST /api/ms-usuarios/sessions/switch-role -> ${newRole}`,
+      'ms-usuarios',
+      newRole,
+      200,
+      ['API Gateway', 'Repository', 'DTO', 'Observer']
+    );
+    setIsLoggedIn(true);
+    setCurrentRole(newRole);
+    setCurrentUser(switched.user);
+
+    if (newRole === 'admin') {
+      setCurrentTab('admin');
+    } else if (newRole === 'trabajador' && (currentTab === 'admin' || currentTab === 'landing')) {
+      setCurrentTab('perfil_laboral');
+    } else if (newRole === 'cliente' && (currentTab === 'admin' || currentTab === 'landing' || currentTab === 'perfil_laboral')) {
+      setCurrentTab('catalogo');
+    }
   };
 
   // Open Chat Handler
@@ -118,6 +143,14 @@ export default function App() {
       ...messages,
       [chatWorker.id]: [...currentChatMsgs, newMsg]
     });
+    platformGateway.msComunicacion.registerSentMessage(newMsg, chatWorker.nombre, currentRole);
+    platformGateway.logRoute(
+      'POST /api/ms-comunicacion/messages',
+      'ms-comunicacion',
+      currentRole,
+      200,
+      ['Observer', 'Adapter', 'Repository', 'DTO']
+    );
   };
 
   // Accept formal offer -> creates contract in 'pendiente_pago' state
@@ -172,6 +205,14 @@ export default function App() {
       ]
     };
 
+    platformGateway.msSolicitudes.createContractFromOffer(newContract, currentRole);
+    platformGateway.logRoute(
+      'POST /api/ms-solicitudes/contracts',
+      'ms-solicitudes',
+      currentRole,
+      200,
+      ['State', 'Observer', 'Repository', 'DTO']
+    );
     setContracts([newContract, ...contracts]);
     setChatWorker(null);
     setEscrowPayingContract(newContract);
@@ -236,23 +277,25 @@ export default function App() {
     }));
   };
 
-  // Contract State transitions handler
+  // Contract State transitions handler delegated to ms-solicitudes (Patrón State + Observer)
   const handleUpdateContractStatus = (contractId: string, newStatus: ContractStatus, note?: string) => {
     setContracts(contracts.map(c => {
       if (c.id === contractId) {
-        return {
-          ...c,
-          estado: newStatus,
-          historialEstados: [
-            ...c.historialEstados,
-            {
-              estado: newStatus,
-              fecha: new Date().toISOString().replace('T', ' ').slice(0, 16),
-              autor: currentUser.nombre,
-              nota: note || `Cambio de estado a ${newStatus}`
-            }
-          ]
-        };
+        const res = platformGateway.msSolicitudes.transitionContractState(
+          c,
+          newStatus,
+          currentUser.nombre,
+          currentRole,
+          note
+        );
+        platformGateway.logRoute(
+          `PATCH /api/ms-solicitudes/contracts/${contractId}/state -> ${newStatus}`,
+          'ms-solicitudes',
+          currentRole,
+          res.valid ? 200 : 400,
+          ['State', 'Observer', 'Repository', 'DTO']
+        );
+        return res.updatedContract;
       }
       return c;
     }));
@@ -273,6 +316,14 @@ export default function App() {
       fechaApertura: new Date().toISOString().replace('T', ' ').slice(0, 16)
     };
 
+    platformGateway.msReputacion.createReporteDisputa(newDispute);
+    platformGateway.logRoute(
+      'POST /api/ms-reputacion/reports',
+      'ms-reputacion',
+      currentRole,
+      200,
+      ['State', 'Observer', 'Repository', 'DTO']
+    );
     setDisputes([newDispute, ...disputes]);
 
     if (disputeData.contratoId) {
@@ -284,22 +335,21 @@ export default function App() {
     }
   };
 
-  // Admin dispute resolution
+  // Admin dispute resolution via ms-reputacion (ReporteStateMachine)
   const handleResolveDispute = (disputeId: string, decision: 'liberar' | 'reembolsar' | 'dividir', motivo: string) => {
     const disp = disputes.find(d => d.id === disputeId);
     if (!disp) return;
 
-    setDisputes(disputes.map(d => {
-      if (d.id === disputeId) {
-        return {
-          ...d,
-          estado: decision === 'liberar' ? 'resuelta_liberado' : decision === 'reembolsar' ? 'resuelta_reembolsado' : 'resuelta_dividido',
-          dictamenAdmin: motivo,
-          fechaResolucion: new Date().toISOString().replace('T', ' ').slice(0, 16)
-        };
-      }
-      return d;
-    }));
+    const resolved = platformGateway.msReputacion.moderateReporte(disp, decision, motivo);
+    platformGateway.logRoute(
+      `PATCH /api/ms-reputacion/reports/${disputeId}/moderate`,
+      'ms-reputacion',
+      'admin',
+      200,
+      ['State', 'Observer', 'Repository', 'DTO']
+    );
+
+    setDisputes(disputes.map(d => (d.id === disputeId ? resolved.updatedDispute : d)));
 
     if (decision === 'liberar') {
       handleUpdateContractStatus(disp.contratoId, 'completado', `Resolución arbitral de Admin: fondos liberados al trabajador. Dictamen: ${motivo}`);
@@ -324,6 +374,14 @@ export default function App() {
       fecha: new Date().toISOString().split('T')[0]
     };
 
+    platformGateway.msReputacion.registerReview(newRev);
+    platformGateway.logRoute(
+      'POST /api/ms-reputacion/reviews',
+      'ms-reputacion',
+      currentRole,
+      200,
+      ['Repository', 'DTO', 'Observer']
+    );
     setReviews([newRev, ...reviews]);
 
     if (reviewData.destinatarioId) {
@@ -422,12 +480,12 @@ export default function App() {
       {/* Brex Announcement Bar */}
       <AnnouncementBar onLearnMoreClick={() => setCurrentTab('como_funciona')} />
 
-      {/* Navbar with exact 'Inicio' and 'Registrar' buttons */}
+      {/* Navbar with Role Switcher (Cliente, Trabajador, Admin) */}
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         currentRole={currentRole}
-        setCurrentRole={setCurrentRole}
+        setCurrentRole={handleRoleSwitch}
         currentUser={currentUser}
         isLoggedIn={isLoggedIn}
         onOpenLogin={() => setAuthModalMode('login')}

@@ -246,6 +246,31 @@ export interface WorkerAnnouncement {
 }
 
 
+export type MicroserviceId =
+  | 'ms-usuarios'
+  | 'ms-perfiles'
+  | 'ms-servicios'
+  | 'ms-busqueda'
+  | 'ms-solicitudes'
+  | 'ms-comunicacion'
+  | 'ms-reputacion'
+  | 'api-gateway'
+  | 'seguridad-transversal'
+  | 'administracion-transversal';
+
+export type DesignPatternType =
+  | 'Repository'
+  | 'DTO'
+  | 'Adapter'
+  | 'State'
+  | 'Strategy'
+  | 'Observer'
+  | 'Dependency Injection'
+  | 'API Gateway'
+  | 'Layered Architecture';
+
+export type ServicioStatus = 'ACTIVO' | 'INACTIVO' | 'SUSPENDIDO' | 'BORRADOR';
+
 export interface LiquibaseChangeset {
   id: string;
   author: string;
@@ -256,7 +281,8 @@ export interface LiquibaseChangeset {
   md5sum: string;
   description: string;
   comments: string;
-  category: 'schema' | 'seed' | 'security';
+  category: 'schema' | 'seed' | 'security' | 'microservices';
+  microservice?: MicroserviceId;
   tablesAffected: string[];
   rollbackSql: string;
 }
@@ -269,5 +295,6 @@ export interface AuditLogEntry {
   esquema: string;
   detalles: string;
   severidad: 'INFO' | 'WARN' | 'CRITICAL';
+  patronAplicado?: DesignPatternType;
   created_at?: string;
 }
