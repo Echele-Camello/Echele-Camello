@@ -5,6 +5,7 @@ import {
   Search, Filter, Tag, Send, Star, ArrowRight, CheckCircle2, 
   DollarSign, Sparkles, AlertCircle, X 
 } from 'lucide-react';
+import { platformGateway } from '../../architecture/gateway/ApiGateway';
 
 interface WorkerForumViewProps {
   announcements: WorkerAnnouncement[];
@@ -127,7 +128,18 @@ export const WorkerForumView: React.FC<WorkerForumViewProps> = ({
       comentarios: []
     };
 
-    onAddAnnouncement(announcementObj);
+    const savedAnnouncement = platformGateway.msServicios.publishAnnouncement(
+      announcementObj,
+      currentUser.currentRole
+    );
+    platformGateway.logRoute(
+      'POST /api/ms-servicios/announcements',
+      'ms-servicios',
+      currentUser.currentRole,
+      200,
+      ['State', 'Repository', 'DTO', 'Observer']
+    );
+    onAddAnnouncement(savedAnnouncement);
     setIsPublishModalOpen(false);
     // Reset form
     setNewTitle('');

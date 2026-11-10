@@ -203,3 +203,4 @@ export interface ResumenReputacionDTO {
   reportesActivos: number;
   insigniaConfiabilidad: 'ORO_VERIFICADO' | 'ESTANDAR' | 'EN_OBSERVACION';
 }
+

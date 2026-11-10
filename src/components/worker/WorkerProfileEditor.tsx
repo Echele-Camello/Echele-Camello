@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { WorkerProfile, WorkerCategory, PortfolioItem } from '../../types';
 import { ShieldCheck, Upload, CheckCircle2, Image, Clock, MapPin, DollarSign, Plus, Trash2 } from 'lucide-react';
+import { platformGateway } from '../../architecture/gateway/ApiGateway';
 
 interface WorkerProfileEditorProps {
   currentWorker: WorkerProfile;
@@ -42,11 +43,14 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
       return;
     }
 
+    const fileAdapter = platformGateway.container.resolve<any>('FileStorageAdapter');
+    const uploaded = fileAdapter.uploadProfileDocument(currentWorker.id, 'portafolio', newImgUrl.trim());
+
     const newItem: PortfolioItem = {
       id: `port-${Date.now()}`,
       titulo: newTitle.trim(),
       descripcion: newDesc.trim() || 'Servicio ejecutado a satisfacción.',
-      fotoUrl: newImgUrl.trim(),
+      fotoUrl: uploaded.secureUrl,
       fecha: 'Reciente'
     };
 
@@ -80,7 +84,15 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
       portafolio
     };
 
-    onSaveWorkerProfile(updated);
+    const savedWorker = platformGateway.msPerfiles.registerOrUpdateWorker(updated);
+    platformGateway.logRoute(
+      `PUT /api/ms-perfiles/workers/${updated.id}`,
+      'ms-perfiles',
+      'trabajador',
+      200,
+      ['Repository', 'DTO', 'Adapter']
+    );
+    onSaveWorkerProfile(savedWorker);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2500);
   };

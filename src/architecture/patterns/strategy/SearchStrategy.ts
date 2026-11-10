@@ -186,3 +186,4 @@ export class SearchStrategyContext {
     return strategy.sort(enriched);
   }
 }
+

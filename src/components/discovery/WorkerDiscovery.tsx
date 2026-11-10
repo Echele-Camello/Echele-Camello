@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { WorkerProfile, WorkerCategory } from '../../types';
 import { Search, ShieldCheck, MapPin, Star, Clock, Filter, ArrowRight } from 'lucide-react';
+import { platformGateway } from '../../architecture/gateway/ApiGateway';
 
 interface WorkerDiscoveryProps {
   workers: WorkerProfile[];
@@ -24,48 +25,27 @@ export const WorkerDiscovery: React.FC<WorkerDiscoveryProps> = ({
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [maxRadiusKm, setMaxRadiusKm] = useState(20);
-  const [sortBy, setSortBy] = useState<'calificacion' | 'precio_menor' | 'experiencia'>('calificacion');
+  const [sortBy, setSortBy] = useState<'cercania' | 'calificacion' | 'precio_menor' | 'experiencia'>('cercania');
 
-  const filteredWorkers = useMemo(() => {
-    return workers.filter((w) => {
-      // Search term
-      if (searchTerm) {
-        const query = searchTerm.toLowerCase();
-        const matchName = w.nombre.toLowerCase().includes(query);
-        const matchCategory = w.categoriaNombre.toLowerCase().includes(query);
-        const matchSpecs = w.especialidades.some(s => s.toLowerCase().includes(query));
-        const matchDesc = w.descripcion.toLowerCase().includes(query);
-        if (!matchName && !matchCategory && !matchSpecs && !matchDesc) return false;
-      }
-
-      // Category filter
-      if (selectedCategory !== 'all' && w.categoriaId !== selectedCategory) {
-        return false;
-      }
-
-      // Verified filter (RF-15)
-      if (onlyVerified && !w.verificado) {
-        return false;
-      }
-
-      // Available filter
-      if (onlyAvailable && !w.disponible) {
-        return false;
-      }
-
-      // Radius
-      if (w.radioKm > maxRadiusKm && maxRadiusKm < 20) {
-        return false;
-      }
-
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'calificacion') return b.calificacionPromedio - a.calificacionPromedio;
-      if (sortBy === 'precio_menor') return a.tarifaPorHora - b.tarifaPorHora;
-      if (sortBy === 'experiencia') return b.serviciosCompletados - a.serviciosCompletados;
-      return 0;
+  const searchResults = useMemo(() => {
+    const res = platformGateway.msBusqueda.searchWorkers(workers, {
+      termino: searchTerm,
+      categoriaId: selectedCategory,
+      soloVerificados: onlyVerified,
+      soloDisponibles: onlyAvailable,
+      estrategiaOrdenamiento: sortBy
     });
+    return res.filter((r) => r.worker.radioKm <= maxRadiusKm || maxRadiusKm >= 20);
   }, [workers, searchTerm, selectedCategory, onlyVerified, onlyAvailable, maxRadiusKm, sortBy]);
+
+  const filteredWorkers = useMemo(() => searchResults.map((r) => r.worker), [searchResults]);
+  const distanceByWorkerId = useMemo(() => {
+    const map: Record<string, number> = {};
+    searchResults.forEach((r) => {
+      map[r.worker.id] = r.distanciaKm;
+    });
+    return map;
+  }, [searchResults]);
 
   return (
     <section className="w-full bg-white py-10">
@@ -138,6 +118,7 @@ export const WorkerDiscovery: React.FC<WorkerDiscoveryProps> = ({
                 aria-label="Ordenar resultados"
                 className="w-full text-xs font-medium text-black bg-transparent outline-none cursor-pointer"
               >
+                <option value="cercania">Más Cercanos en Km (Strategy Haversine)</option>
                 <option value="calificacion">Mejor Calificados (★ 5.0)</option>
                 <option value="precio_menor">Tarifa base más económica</option>
                 <option value="experiencia">Más servicios completados</option>
@@ -255,6 +236,11 @@ export const WorkerDiscovery: React.FC<WorkerDiscoveryProps> = ({
                     <span className="truncate">{worker.barrio}</span>
                     <span aria-hidden="true">·</span>
                     <span className="text-black tabular-nums font-medium">{worker.radioKm} km cob.</span>
+                    {typeof distanceByWorkerId[worker.id] === 'number' && (
+                      <span className="ml-auto text-[10px] font-mono bg-[#fff2eb] text-[#ff5900] px-1.5 py-0.5 rounded font-bold">
+                        ~{distanceByWorkerId[worker.id]} km
+                      </span>
+                    )}
                   </div>
 
                   {/* Bio */}

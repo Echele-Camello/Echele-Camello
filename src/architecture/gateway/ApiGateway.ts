@@ -263,3 +263,4 @@ export class ApiGateway {
 }
 
 export const platformGateway = ApiGateway.getInstance();
+

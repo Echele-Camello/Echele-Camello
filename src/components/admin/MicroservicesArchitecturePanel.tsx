@@ -512,3 +512,4 @@ export const MicroservicesArchitecturePanel: React.FC = () => {
     </div>
   );
 };
+

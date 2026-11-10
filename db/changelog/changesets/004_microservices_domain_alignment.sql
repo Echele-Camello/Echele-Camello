@@ -152,3 +152,4 @@ INSERT INTO `audit_logs` (`id`, `accion`, `usuario`, `timestamp`, `esquema`, `de
 ('log-5', 'MICROSERVICES_ARCH_ALIGNED', 'arquitectura', '2026-11-10 02:20:00', 'api-gateway', 'Alineación de los 7 microservicios de dominio (ms-usuarios, ms-perfiles, ms-servicios, ms-busqueda, ms-solicitudes, ms-comunicacion, ms-reputacion) con patrones Repository, DTO, State, Strategy, Observer y Adapter.', 'INFO')
 ON DUPLICATE KEY UPDATE `detalles` = VALUES(`detalles`);
 -- rollback DELETE FROM `audit_logs` WHERE `id` = 'log-5'; DELETE FROM `services` WHERE `id` IN ('srv-101','srv-102','srv-103','srv-104'); DELETE FROM `roles` WHERE `id` IN ('rol-cliente','rol-trabajador','rol-admin');
+
